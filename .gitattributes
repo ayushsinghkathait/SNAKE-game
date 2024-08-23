@@ -1,2 +1,227 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+#include <iostream>
+#include <conio.h>
+#include <cstdlib>
+#include <windows.h>
+
+#include <ctime>
+using namespace std;
+const char RIGHT = 'R';
+const char LEFT = 'L';
+const char DOWN = 'D';
+const char UP = 'U';
+int consoleHeight, consoleWidth;
+void initScreen()
+{ // from windows.h directory;
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(hConsole, &csbi);
+    consoleHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+    consoleWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+}
+
+struct point
+{
+public:
+    int coordx;
+    int coordy;
+    point()
+    {
+    }
+    point(int x, int y)
+    {
+        coordx = x;
+        coordy = y;
+    }
+};
+class snake
+{
+    int length;
+    char direction;
+
+public:
+    point body[1000];
+    snake(int x, int y)
+    {
+        length = 1;
+        body[0] = point(x, y);
+        direction = RIGHT;
+    }
+    int getlen()
+    {
+        return length;
+    }
+
+    void changedirection(char newdirection)
+    {
+
+        if (newdirection == RIGHT && direction != LEFT)
+        {
+            direction = newdirection;
+        }
+        if (newdirection == LEFT && direction != RIGHT)
+        {
+            direction = newdirection;
+        }
+        if (newdirection == UP && direction != DOWN)
+        {
+            direction = newdirection;
+        }
+        if (newdirection == DOWN && direction != UP)
+        {
+            direction = newdirection;
+        }
+    }
+
+    bool move(point food)
+    {
+        for (int i = length - 1; i > 0; i--)
+        {
+
+            body[i] = body[i - 1];
+        }
+
+        switch (direction)
+        {
+            int val;
+
+        case UP:
+            val = body[0].coordy;
+            body[0].coordy = val - 1;
+            break;
+        case DOWN:
+            val = body[0].coordy;
+            body[0].coordy = val + 1;
+            break;
+        case RIGHT:
+            val = body[0].coordx;
+            body[0].coordx = val + 1;
+            break;
+
+        case LEFT:
+            val = body[0].coordx;
+            body[0].coordx = val - 1;
+            break;
+        }
+
+        for (int i = 1; i < length; i++)
+        {
+
+            if (body[0].coordx == body[i].coordx && body[0].coordy == body[i].coordy)
+            {
+                return false;
+            }
+        }
+
+        if (  food.coordx== body[0].coordx&& food.coordy   ==body[0].coordy  )
+        {
+
+            body[length] = point(body[length - 1].coordx, body[length - 1].coordy);
+            length++;
+            // spawn();
+        }
+        return true;
+    };
+};
+
+class board
+{
+    snake *snk;
+    point food;
+    char SNAKEBODY = 'O';
+    char FOOD = 'l';
+
+public:
+    board()
+    {
+        spawn();
+        snk = new snake(10, 10);
+    }
+    ~board()
+    {
+        delete snk;
+    }
+    void spawn()
+    {
+        int x = rand() % consoleWidth;
+
+        int y = rand() % consoleHeight;
+        food = point(x, y);
+    }
+    void gotoxy(int x, int y)
+    {
+        COORD coord;
+        coord.X = x;
+        coord.Y = y;
+
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+    }
+    void draw()
+    {
+        system("cls");
+        for (int i = 0; i < snk->getlen(); i++)
+        {
+
+            gotoxy(snk->body[i].coordx, snk->body[i].coordy);
+            cout << SNAKEBODY;
+        }
+
+        gotoxy(food.coordx, food.coordy);
+
+        cout << FOOD;
+    }
+
+    bool update()
+    {
+        bool isalive = snk->move(food);
+        if (isalive == false)
+        {
+            return false;
+        }
+        if(food.coordx   ==  snk->body[0].coordx&&food.coordy    ==snk->body[0].coordy){
+          spawn();
+        }
+        return true;
+    }
+    void getinput()
+    {
+        if (kbhit())
+        {
+            char key;
+            key = getch();
+            if (key == 'W' or key == 'w')
+            {
+                snk->changedirection(UP);
+            }
+            if (key == 'd' or key == 'D')
+            {
+                snk->changedirection(RIGHT);
+            }
+
+            if (key == 'A' or key == 'a')
+            {
+                snk->changedirection(LEFT);
+            }
+            if (key == 'S' or key == 's')
+            {
+                snk->changedirection(DOWN);
+            }
+        }
+    }
+};
+int main()
+{
+    initScreen();
+    srand(time(0));
+    board b1;
+
+    while (b1.update())
+    {
+        b1.getinput();
+        b1.draw();
+        
+        Sleep(100);
+    }
+
+    // cout<<"gameover";
+    return 0;
+}
